@@ -6,6 +6,8 @@ import torch.nn.functional as F
 import torch.utils.data as dataloader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from tqdm import tqdm
+import numpy as np
 
 
 # create fully connected networks
@@ -35,6 +37,15 @@ def load_checkpoint(checkpoint):
     optimizer.load_state_dict(checkpoint['state_dict'])
 
 
+# seeding for reproducibility
+seed = 42
+torch.manual_seed(seed)
+np.random.seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+
 # initialize device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -62,12 +73,11 @@ if load_model:
     load_model(torch.load('my_checkpoint.pth.tar'))
 
 for epoch in range(num_epochs):
-    losses = []
     checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
-    if epoch %3 == 0:
+    if epoch % 3 == 0:
         save_checkpoint(checkpoint)
-
-    for batch_idx, (data, target) in enumerate(train_loader):
+        loop = tqdm(enumerate(train_loader), total=len(train_loader))
+    for batch_idx, (data, target) in loop:
         data = data.to(device=device)
         target = target.to(device=device)
 
@@ -75,12 +85,14 @@ for epoch in range(num_epochs):
 
         scores = model(data)
         loss = criterion(scores, target)
-        losses.append(loss.item())
 
         optimizer.zero_grad()
         loss.backward()
 
         optimizer.step()
+
+        loop.set_description(f'Epoch [{epoch}/{num_epochs}]')
+        loop.set_postfix(loss=loss.item(), acc=torch.rand(1).item())
 
 
 def check_accuracy(loader, m):

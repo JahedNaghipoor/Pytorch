@@ -6,22 +6,7 @@ import torch.nn.functional as F
 import torch.utils.data as dataloader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-
-
-# create fully connected networks
-class NN(nn.Module):
-    """
-    docstring
-    """
-    def __init__(self, input_size, num_classes):
-        super(NN, self).__init__()
-        self.fc1 = nn.Linear(input_size, 50)
-        self.fc2 = nn.Linear(50, num_classes)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+from torch.utils.tensorboard import SummaryWriter
 
 
 class CNN(nn.Module):
@@ -32,6 +17,8 @@ class CNN(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3,3), stride=(1,1), padding=(1,1))
         self.fc1 = nn.Linear(16*7*7, num_classes)
 
+        self.initialize_weights()
+
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = self.pool(x)
@@ -41,6 +28,22 @@ class CNN(nn.Module):
         x = self.fc1(x)
 
         return x
+
+    #weight initialization
+    def initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.conv2d):
+                nn.init.kaiming_uniform_(m.weight)
+
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Batchnorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight)
+                nn.init.constant_(m.bias, 0)
+
 
 # initialize device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -62,8 +65,17 @@ test_loader = dataloader(dataset=test_dataset, batch_size=batch_size, shuffle=Tr
 model = CNN().to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters, lr=learning_rate)
+optimizer = optim.Adam(model.parameters, lr=learning_rate, weight_decay=0.0)
+
+#tensorboard
+writer = SummaryWriter(f'runs/MNIST/tryingout_tensorboard')
+
+# learning rate scheduler
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=5, verbose=True)
+
+step=0
 for epoch in range(num_epochs):
+    losses = []
     for batch_idx, (data, target) in enumerate(train_loader):
         data = data.to(device=device)
         target = target.to(device=device)
@@ -74,7 +86,21 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         loss.backward()
 
+        losses.append(loss.item())
+
         optimizer.step()
+        optimizer.zero_grad()
+
+        mean_loss = sum(losses)/len(losses)
+        scheduler.step(mean_loss)
+
+        _, predictions = scores.max(1)
+        num_correct = (predictions == target).sum()
+        running_training_acc = float(num_correct)/float(data.shape[0])
+
+        writer.add_scalar('Training Loss', loss, global_step=step)
+        writer.add_scalar('Training Accuracy', running_training_acc, global_step=step)
+        step += 1
 
 
 def check_accuracy(loader, m):
