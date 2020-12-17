@@ -3,7 +3,7 @@ import torchvision.transforms as transforms
 from torchviosion.utils import save_image
 from LoadData import CatsAndDogsDataset
 
-
+# transformation
 my_transforms = transforms.Compose(
     [
         transforms.ToPILImage(),
