@@ -2,14 +2,31 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data as dataloader
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+import torchvision
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
+
+class NN(nn.Module):
+    """
+    docstring
+    """
+    def __init__(self, input_size, num_classes):
+        super(NN, self).__init__()
+        self.fc1 = nn.Linear(input_size, 50)
+        self.fc2 = nn.Linear(50, num_classes)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
 # initialize device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparameters
+input_size = 784
 in_channels = 3
 num_classes = 10
 learning_rate = 1e-3
@@ -27,7 +44,7 @@ class Identity(nn.Module):
 
 model = torchvision.models.vgg16(pretrained=True)
 print(model)
-for param in model.parameters:
+for param in model.parameters():
     param.require_grad = False
 model.avgpool = Identity()
 model.classifier = nn.Sequential(nn.Linear(512, 100),
@@ -37,15 +54,15 @@ model.to(device)
 
 # load data
 train_dataset = datasets.MNIST(root='dataset/', train=True, transform=transforms.ToTensor(), download=True)
-train_loader = dataloader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True)
-test_loader = dataloader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
 model = NN(input_size=input_size, num_classes=num_classes).to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters, lr=learning_rate)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 
 for epoch in range(num_epochs):

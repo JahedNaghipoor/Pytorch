@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import torch.utils.data as dataloader
+from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
@@ -41,15 +41,15 @@ class BRNN(nn.Module):
 
 # load data
 train_dataset = datasets.MNIST(root='dataset/', train=True, transform=transforms.ToTensor(), download=True)
-train_loader = dataloader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True)
-test_loader = dataloader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
-model = RNN(input_size, hidden_size, num_layers, num_classes).to(device)
+model = BRNN(input_size, hidden_size, num_layers, num_classes).to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters, lr=learning_rate)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 for epoch in range(num_epochs):
     for batch_idx, (data, target) in enumerate(train_loader):
         data = data.to(device=device).squeeze(1)

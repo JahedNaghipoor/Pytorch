@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 from torchvision.utils import save_image
-from torch.utils.data import dataloader
+from torch.utils.data import DataLoader
 from LoadData import CatsAndDogsDataset
 
 #mean and std
@@ -19,7 +19,7 @@ def get_mean_std(loader):
 
 # load dataset
 dataset = CatsAndDogsDataset(csv_file='cats_dogs.csv', root_dir='cats_dogs_resized', transform=transforms.ToTensor())
-train_loader = dataloader(dataset=dataset, batch_size=64, shuffle=True)
+train_loader = DataLoader(dataset=dataset, batch_size=64, shuffle=True)
 
 mean, std = get_mean_std(train_loader)
 
@@ -42,4 +42,4 @@ img_num = 0
 for _ in range(10):
     for img, label in dataset:
         save_image(img, 'img' + str(img_num) + '.png')
-        img_num *= 1
+        img_num += 1

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import torch.utils.data as dataloader
+from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from tqdm import tqdm
@@ -34,7 +34,7 @@ def save_checkpoint(state, filename='my_checkpoint.pth.tar'):
 def load_checkpoint(checkpoint):
     print('Loading checkpoint')
     model.load_state_dict(checkpoint['state_dict'])
-    optimizer.load_state_dict(checkpoint['state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
 
 
 # seeding for reproducibility
@@ -59,18 +59,18 @@ load_model = True
 
 # load data
 train_dataset = datasets.MNIST(root='dataset/', train=True, transform=transforms.ToTensor(), download=True)
-train_loader = dataloader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True)
-test_loader = dataloader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
 model = NN(input_size=input_size, num_classes=num_classes).to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters, lr=learning_rate)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 if load_model:
-    load_model(torch.load('my_checkpoint.pth.tar'))
+    load_checkpoint(torch.load('my_checkpoint.pth.tar'))
 
 for epoch in range(num_epochs):
     checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}

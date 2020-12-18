@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import torch.utils.data as dataloader
+from  torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.tensorboard import SummaryWriter
@@ -32,12 +32,12 @@ class CNN(nn.Module):
     #weight initialization
     def initialize_weights(self):
         for m in self.modules():
-            if isinstance(m, nn.conv2d):
+            if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_uniform_(m.weight)
 
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Batchnorm2d):
+            elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
@@ -57,15 +57,15 @@ num_epochs = 5
 
 # load data
 train_dataset = datasets.MNIST(root='dataset/', train=True, transform=transforms.ToTensor(), download=True)
-train_loader = dataloader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
+train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True)
-test_loader = dataloader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
 model = CNN().to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters, lr=learning_rate, weight_decay=0.0)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.0)
 
 #tensorboard
 writer = SummaryWriter(f'runs/MNIST/tryingout_tensorboard')
@@ -73,7 +73,7 @@ writer = SummaryWriter(f'runs/MNIST/tryingout_tensorboard')
 # learning rate scheduler
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=5, verbose=True)
 
-step=0
+step = 0
 for epoch in range(num_epochs):
     losses = []
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -117,7 +117,7 @@ def check_accuracy(loader, m):
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
 
-            print(f'accuracy: {float(num_correct)}/{float(num_samples)*100:.2f}')
+    print(f'accuracy: {float(num_correct)}/{float(num_samples)*100:.2f}')
 
 
 check_accuracy(train_loader, model)
