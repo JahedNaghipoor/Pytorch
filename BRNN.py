@@ -6,17 +6,18 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from tqdm import tqdm
 
 
 # initialize device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparameters
-input_size = 784
+input_size = 28
 sequence_length = 28
 num_layers = 2
 hidden_size = 256
-num_classes = 64
+num_classes = 10
 learning_rate = 1e-3
 batch_size = 64
 num_epochs = 2
@@ -50,13 +51,14 @@ model = BRNN(input_size, hidden_size, num_layers, num_classes).to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+loop = tqdm(enumerate(train_loader), total=len(train_loader))
 for epoch in range(num_epochs):
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, targets) in loop:
         data = data.to(device=device).squeeze(1)
-        target = target.to(device=device)
+        targets = targets.to(device=device)
 
         scores = model(data)
-        loss = criterion(scores, target)
+        loss = criterion(scores, targets)
 
         optimizer.zero_grad()
         loss.backward()
@@ -64,12 +66,12 @@ for epoch in range(num_epochs):
         optimizer.step()
 
 
-def check_accuracy(loader, m):
+def check_accuracy(loader, model):
     num_correct = 0
     num_samples = 0
-    m.eval()
+    model.eval()
     with torch.no_grad():
-        for x,y in loader:
+        for x, y in loader:
             x = x.to(device=device).squeeze(1)
             y = y.to(device=device)
 
@@ -78,7 +80,7 @@ def check_accuracy(loader, m):
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
 
-            print(f'accuracy: {float(num_correct)}/{float(num_samples)*100:.2f}')
+        print(f'accuracy: {float(num_correct)/float(num_samples)*100:.2f}')
 
 
 check_accuracy(train_loader, model)

@@ -7,14 +7,15 @@ from  torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 
 class CNN(nn.Module):
     def __init__(self, in_channels=1, num_classes=10):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(3,3), stride=(1,1), padding=(1,1))
-        self.pool = nn.MaxPool2d(kernel_size=(2,2), stride=(2,2))
-        self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3,3), stride=(1,1), padding=(1,1))
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
+        self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         self.fc1 = nn.Linear(16*7*7, num_classes)
 
         self.initialize_weights()
@@ -76,12 +77,13 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience
 step = 0
 for epoch in range(num_epochs):
     losses = []
-    for batch_idx, (data, target) in enumerate(train_loader):
+    loop = tqdm(enumerate(train_loader), total=len(train_loader))
+    for batch_idx, (data, targets) in loop:
         data = data.to(device=device)
-        target = target.to(device=device)
+        targets = targets.to(device=device)
 
         scores = model(data)
-        loss = criterion(scores, target)
+        loss = criterion(scores, targets)
 
         optimizer.zero_grad()
         loss.backward()
@@ -89,13 +91,12 @@ for epoch in range(num_epochs):
         losses.append(loss.item())
 
         optimizer.step()
-        optimizer.zero_grad()
 
         mean_loss = sum(losses)/len(losses)
         scheduler.step(mean_loss)
 
         _, predictions = scores.max(1)
-        num_correct = (predictions == target).sum()
+        num_correct = (predictions == targets).sum()
         running_training_acc = float(num_correct)/float(data.shape[0])
 
         writer.add_scalar('Training Loss', loss, global_step=step)
@@ -103,12 +104,12 @@ for epoch in range(num_epochs):
         step += 1
 
 
-def check_accuracy(loader, m):
+def check_accuracy(loader, model):
     num_correct = 0
     num_samples = 0
-    m.eval()
+    model.eval()
     with torch.no_grad():
-        for x,y in loader:
+        for x, y in loader:
             x = x.to(device=device)
             y = y.to(device=device)
 
@@ -117,7 +118,7 @@ def check_accuracy(loader, m):
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
 
-    print(f'accuracy: {float(num_correct)}/{float(num_samples)*100:.2f}')
+        print(f'accuracy: {float(num_correct)/float(num_samples)*100:.2f}')
 
 
 check_accuracy(train_loader, model)

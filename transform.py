@@ -32,7 +32,8 @@ my_transforms = transforms.Compose(
         transforms.RandomRotation(degree=45),
         transforms.ColorJitter(brightness=0.5),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomVerticalFlip(p=0.2),
+        transforms.RandomVerticalFlip(p=0.1),
+        transforms.RandomGrayscale(p=0.2),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std)
     ]
