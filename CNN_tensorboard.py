@@ -52,9 +52,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Hyperparameters
 in_channel = 1
 num_classes = 64
-learning_rates = [0.1, 0.001, 1e-3, 1e-4]
-batch_sizes = [1, 64, 1024]
+learning_rates = [1e-3]
+batch_sizes = [256]
 num_epochs = 1
+classes = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 
 for batch_size in batch_sizes:
@@ -63,7 +64,7 @@ for batch_size in batch_sizes:
         model = CNN(in_channel=in_channel, num_classes=num_classes).to(device)
         model.train()
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.0)
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         train_dataset = datasets.MNIST(root='dataset/', train=True, transform=transforms.ToTensor(), download=True)
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
@@ -75,6 +76,7 @@ for batch_size in batch_sizes:
 
         for epoch in range(num_epochs):
             losses = []
+            accuracies = []
             loop = tqdm(enumerate(train_loader), total=len(train_loader))
             for batch_idx, (data, targets) in loop:
                 data = data.to(device=device)
@@ -91,12 +93,21 @@ for batch_size in batch_sizes:
                 mean_loss = sum(losses)/len(losses)
                 scheduler.step(mean_loss)
 
+                features = data.reshape(data.shape[0], -1)
                 _, predictions = scores.max(1)
                 num_correct = (predictions == targets).sum()
                 running_training_acc = float(num_correct)/float(data.shape[0])
+                accuracies.append(running_training_acc)
+
+                class_labels = [classes[label] for label in targets]
 
                 writer.add_scalar('Training Loss', loss, global_step=step)
                 writer.add_scalar('Training Accuracy', running_training_acc, global_step=step)
+                writer.add_hparams({'lr': learning_rate, 'bsize': batch_size},
+                                   {'accuracy': sum(accuracies)/len(accuracies),
+                                    'loss': sum(losses)/len(losses)})
+                if batch_idx == 230:
+                    writer.add_embedding(features, metadata=class_labels, label_img=data, global_step=batch_idx)
                 step += 1
 
 
