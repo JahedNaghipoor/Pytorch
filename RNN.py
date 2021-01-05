@@ -2,7 +2,6 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 from  torch.utils.data import DataLoader
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
@@ -29,7 +28,7 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         #self.gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
-        self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
+        self.rnn = nn.RNN(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
         #self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size*sequence_length, num_classes)
 
@@ -52,7 +51,7 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=
 test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
-model = RNN(input_size, hidden_size, num_layers, num_classes).to(device)
+model = RNN(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, num_classes=num_classes).to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -62,12 +61,15 @@ for epoch in range(num_epochs):
         data = data.to(device=device).squeeze(1)
         target = target.to(device=device)
 
+        # forward
         scores = model(data)
         loss = criterion(scores, target)
 
+        # backward
         optimizer.zero_grad()
         loss.backward()
 
+        # gradient decent
         optimizer.step()
 
 
