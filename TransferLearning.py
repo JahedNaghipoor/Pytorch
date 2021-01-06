@@ -31,6 +31,7 @@ learning_rate = 1e-3
 batch_size = 1024
 num_epochs = 5
 
+
 class Identity(nn.Module):
     def __init__(self):
         super(Identity, self).__init__()
@@ -38,14 +39,15 @@ class Identity(nn.Module):
     def forward(self, x):
         return x
 
-model = torchvision.models.vgg16(pretrained=True)
 
+model = torchvision.models.vgg16(pretrained=True)
 for param in model.parameters():
     param.require_grad = False
 model.avgpool = Identity()
 model.classifier = nn.Sequential(nn.Linear(512, 100),
                                  nn.ReLU(),
                                  nn.Linear(100, 10))
+print(model)
 model.to(device)
 
 # load data
@@ -82,7 +84,7 @@ def check_accuracy(loader, model):
     num_samples = 0
     model.eval()
     with torch.no_grad():
-        for x,y in loader:
+        for x, y in loader:
             x = x.to(device=device)
             y = y.to(device=device)
             x = x.reshape(x.shape[0], -1)

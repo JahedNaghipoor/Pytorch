@@ -4,7 +4,8 @@ from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 from LoadData import CatsAndDogsDataset
 
-#mean and std
+
+# mean and std
 def get_mean_std(loader):
     channels_sum, channels_sum_squared, num_batches = 0, 0, 0
 
@@ -17,13 +18,10 @@ def get_mean_std(loader):
 
     return mean, std
 
-# load dataset
-dataset = CatsAndDogsDataset(csv_file='cats_dogs.csv', root_dir='cats_dogs_resized', transform=transforms.ToTensor())
-train_loader = DataLoader(dataset=dataset, batch_size=64, shuffle=True)
 
-mean, std = get_mean_std(train_loader)
-
-#transformation
+# transformation
+mean = [0.0, 0.0, 0.0]
+std = [1.0, 1.0, 1.0]
 my_transforms = transforms.Compose(
     [
         transforms.ToPILImage(),
@@ -38,6 +36,12 @@ my_transforms = transforms.Compose(
         transforms.Normalize(mean=mean, std=std)
     ]
 )
+
+# load dataset
+dataset = CatsAndDogsDataset(csv_file='cats_dogs.csv', root_dir='cats_dogs_resized', transform=my_transforms)
+train_loader = DataLoader(dataset=dataset, batch_size=64, shuffle=True)
+
+mean, std = get_mean_std(train_loader)
 
 img_num = 0
 for _ in range(10):

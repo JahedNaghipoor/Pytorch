@@ -24,6 +24,7 @@ class NN(nn.Module):
         return x
 
 
+# Checkpoints
 def save_checkpoint(state, filename='my_checkpoint.pth.tar'):
     print('Saving checkpoint ...')
     torch.save(state, filename)
@@ -52,27 +53,32 @@ num_classes = 10
 learning_rate = 1e-3
 batch_size = 64
 num_epochs = 10
-load_model = False
+load_model = True
 
 # load data
 train_dataset = datasets.MNIST(root='dataset/', train=True, transform=transforms.ToTensor(), download=True)
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
 test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True) # Do not shuffle for time series
 
 model = NN(input_size=input_size, num_classes=num_classes).to(device=device)
 
+# Note 4: do not use Softmax with CrossEntropyLoss, it has already
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+
+# get a single batch, Note 1: over-fit a single batch first
+#data, targets = next(iter(train_loader))
 
 if load_model:
     load_checkpoint(torch.load('my_checkpoint.pth.tar'))
 
 # Train network
 for epoch in range(num_epochs):
-    checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
     if epoch % 5 == 0:
+        checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
         save_checkpoint(checkpoint)
         loop = tqdm(enumerate(train_loader), total=len(train_loader))
     for batch_idx, (data, targets) in loop:
@@ -88,7 +94,7 @@ for epoch in range(num_epochs):
         loss = criterion(scores, targets)
 
         # backward
-        optimizer.zero_grad()
+        optimizer.zero_grad() # Note 3: do not forget it!
         loss.backward()
 
         # gradient decent or adam step
@@ -105,7 +111,7 @@ def check_accuracy(loader, model):
         print('Test dataset')
     num_correct = 0
     num_samples = 0
-    model.eval()
+    model.eval() # Note 2: do not forget it!
     with torch.no_grad():
         for x, y in loader:
             x = x.to(device=device)
@@ -123,3 +129,4 @@ def check_accuracy(loader, model):
 
 check_accuracy(train_loader, model)
 check_accuracy(test_loader, model)
+
