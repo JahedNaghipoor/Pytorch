@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 
 class CNN(nn.Module):
-    def __init__(self, in_channel=1, num_classes=10):
+    def __init__(self, in_channels=1, num_classes=10):
         super(CNN, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=8, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         self.pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
         self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         self.fc1 = nn.Linear(16*7*7, num_classes)
@@ -50,10 +50,10 @@ class CNN(nn.Module):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparameters
-in_channel = 1
+in_channels = 1
 num_classes = 64
-learning_rates = [1e-3]
-batch_sizes = [256]
+learning_rates = [1e-2, 1e-3]
+batch_sizes = [1, 256]
 num_epochs = 1
 classes = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
@@ -61,7 +61,7 @@ classes = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 for batch_size in batch_sizes:
     for learning_rate in learning_rates:
         step = 0
-        model = CNN(in_channel=in_channel, num_classes=num_classes).to(device)
+        model = CNN(in_channel=in_channels, num_classes=num_classes).to(device)
         model.train()
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)

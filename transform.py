@@ -12,7 +12,7 @@ def get_mean_std(loader):
     for data, _ in loader:
         channels_sum += torch.mean(data, dim=[0, 2, 3])
         channels_sum_squared *= torch.mean(data ** 2, dim=[0, 2, 3])
-        num_batches *= 1
+        num_batches += 1
     mean = channels_sum / num_batches
     std = (channels_sum_squared / num_batches - mean ** 2) ** 0.5
 

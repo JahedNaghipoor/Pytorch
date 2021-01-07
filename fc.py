@@ -8,6 +8,7 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from tqdm import tqdm
 import numpy as np
+import random
 
 
 # Create fully connected networks
@@ -40,6 +41,7 @@ def load_checkpoint(checkpoint):
 seed = 42
 torch.manual_seed(seed)
 np.random.seed(seed)
+random.seed(seed)
 torch.cuda.manual_seed_all(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
@@ -80,7 +82,7 @@ for epoch in range(num_epochs):
     if epoch % 5 == 0:
         checkpoint = {'state_dict': model.state_dict(), 'optimizer': optimizer.state_dict()}
         save_checkpoint(checkpoint)
-        loop = tqdm(enumerate(train_loader), total=len(train_loader))
+        loop = tqdm(enumerate(train_loader), total=len(train_loader), leave=False)
     for batch_idx, (data, targets) in loop:
         # get data to cuda if possible
         data = data.to(device=device)
@@ -100,8 +102,9 @@ for epoch in range(num_epochs):
         # gradient decent or adam step
         optimizer.step()
 
+        # update progress bar
         loop.set_description(f'Epoch [{epoch}/{num_epochs}]')
-        loop.set_postfix(loss=loss.item(), acc=torch.rand(1).item())
+        loop.set_postfix(loss=loss.item()) # also acc=torch.rand(1).item()
 
 
 def check_accuracy(loader, model):

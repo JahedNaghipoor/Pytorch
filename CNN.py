@@ -18,6 +18,7 @@ class CNN(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         self.fc1 = nn.Linear(16*7*7, num_classes)
 
+        # after all modules
         self.initialize_weights()
 
     def forward(self, x):
@@ -35,15 +36,16 @@ class CNN(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_uniform_(m.weight)
-
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
                 nn.init.kaiming_uniform_(m.weight)
-                nn.init.constant_(m.bias, 0)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
 
 # initialize device
@@ -70,6 +72,7 @@ for batch_size in batch_sizes:
         test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True)
         test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
+        # if it does not change after 5 times, reduce learning rate manually by factor 0.1
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=5, verbose=True)
         writer = SummaryWriter(f'runs/MNIST/MiniBatchSize {batch_size} LR {learning_rate}')
 
